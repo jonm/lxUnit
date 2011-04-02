@@ -1,0 +1,2 @@
+This is a unit-testing framework for Lua inspired from the xUnit
+family of frameworks, and ported from JUnit specifically.
