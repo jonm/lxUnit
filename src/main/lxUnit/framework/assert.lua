@@ -9,8 +9,8 @@ function Assert.assertFalse(condition, message)
 end
 
 function Assert.fail(message)
-   error({ type = 'AssertionFailedError',
-	   message = message })
+   if message == nil then error("AssertionFailedError") end
+   error("AssertionFailedError: " .. message)
 end
 
 function Assert.assertEquals(expected, actual, message)

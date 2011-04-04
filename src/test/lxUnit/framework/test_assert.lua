@@ -4,22 +4,26 @@ tests = {}
 
 function tests.failThrowsError()
    status, _ = pcall(function () Assert.fail() end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.failWithMessageThrowsError()
    status, _ = pcall(function () Assert.fail("msg") end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.failWithMessageIncludesMessageInError()
    status, err = pcall(function () Assert.fail("msg") end)
-   if err.message ~= "msg" then error() end
+   if err:find("AssertionFailedError: msg") == nil then 
+      error("err was: " .. err)
+   end
 end
 
 function tests.failWithoutMessageHasNilMessageInError()
    status, err = pcall(function () Assert.fail() end)
-   if err.message ~= nil then error() end
+   if err:find("AssertionFailedError") == nil then 
+      error("wrong error thrown")
+   end
 end
 
 function tests.assertTrueWorksOnTrue()
@@ -28,7 +32,7 @@ end
 
 function tests.assertTrueThrowsErrorOnFalse()
    status, _ = pcall(function () Assert.assertTrue(false) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertTrueWithMessageWorksOnTrue()
@@ -37,8 +41,10 @@ end
 
 function tests.assertTrueWithMessageThrowsErrorOnFalse()
    status, err = pcall(function () Assert.assertTrue(false, "msg") end)
-   if status then error() end
-   if err.message ~= "msg" then error() end
+   if status then error("did not throw error") end
+   if err:find("AssertionFailedError: msg") == nil then
+      error("did not include message")
+   end
 end
 
 function tests.assertFalseWorksOnFalse()
@@ -47,7 +53,7 @@ end
 
 function tests.assertFalseThrowsErrorOnTrue()
    status, _ = pcall(function () Assert.assertFalse(true) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertFalseWithMessageWorksOnFalse()
@@ -56,8 +62,10 @@ end
 
 function tests.assertFalseWithMessageThrowsErrorOnTrue()
    status, err = pcall(function () Assert.assertFalse(true, "msg") end)
-   if status then error() end
-   if err.message ~= "msg" then error() end
+   if status then error("did not throw error") end
+   if err:find("AssertionFailedError: msg") == nil then
+      error("did not include message in error")
+   end
 end
 
 function tests.assertEqualsWorksForNilAndNil()
@@ -66,7 +74,7 @@ end
 
 function tests.assertEqualsThrowsErrorForNilAndSomethingElse()
    status, err = pcall(function () Assert.assertEquals(nil,1) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertEqualsWorksForEqualNumbers()
@@ -75,12 +83,12 @@ end
 
 function tests.assertEqualsThrowsErrorForUnequalNumbers()
    status, err = pcall(function () Assert.assertEquals(1,2) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertEqualsThrowsErrorForMismatchedTypes()
    status, err = pcall(function () Assert.assertEquals(1,"b") end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertEqualsWorksForEqualStrings()
@@ -89,7 +97,7 @@ end
 
 function tests.assertEqualsThrowsErrorForUnequalStrings()
    status, err = pcall(function () Assert.assertEquals("a","b") end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertEqualsWorksForEqualBooleans()
@@ -98,7 +106,7 @@ end
 
 function tests.assertEqualsThrowsErrorForUnequalBooleans()
    status, err = pcall(function () Assert.assertEquals(true,false) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertEqualsWorksForTheSameFunction()
@@ -109,7 +117,7 @@ function tests.assertEqualsThrowsErrorsForFunctionsThatAreNotTheSame()
    f = function () return 1 end
    g = function () return 1 end
    status, _ = pcall(function () Assert.assertEquals(f,g) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertEqualsWorksForTheSameTable()
@@ -131,7 +139,7 @@ end
 
 function tests.assertNotNilThrowsErrorForNil()
    status, _ = pcall(function () Assert.assertNotNil(nil) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function tests.assertNilWorksForNil()
@@ -140,16 +148,26 @@ end
 
 function tests.assertNilThrowsErrorForNonNil()
    status, _ = pcall(function () Assert.assertNil(1) end)
-   if status then error() end
+   if status then error("did not throw error") end
 end
 
 function main()
    cnt = 0
+   passes = 0
    table.foreach(tests, function (test)
 			   cnt = cnt + 1
-			   tests[test]()
+			   status, err = xpcall(function () tests[test]() end,
+						debug.traceback)
+			   if status then
+			      print("  " .. test .. ": PASS")
+			      passes = passes + 1
+			   else
+			      print("  " .. test .. ": FAIL")
+			      print(err)
+			   end
 			end)
-   print("test_assert.lua: passed " .. cnt .. " tests: OK")
+   print("test_assert.lua: passed " .. passes .. "/" .. cnt .. " tests")
+   if passes ~= cnt then error("There were test failures.") end
 end
 
 main()
