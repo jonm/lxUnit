@@ -151,21 +151,31 @@ function tests.assertNilThrowsErrorForNonNil()
    if status then error("did not throw error") end
 end
 
+local function verbose()
+   if arg == nil then return false end
+   for _,k in ipairs(arg) do
+      if k == "-v" then return true end
+   end
+   return false
+end
+
+local function runTest(test)
+   cnt = cnt + 1
+   status, err = xpcall(function () tests[test]() end,
+			debug.traceback)
+   if status then
+      if verbose() then print("  " .. test .. ": PASS") end
+      passes = passes + 1
+   else
+      print("  " .. test .. ": FAIL")
+      print(err)
+   end
+end
+
 function main()
    cnt = 0
    passes = 0
-   table.foreach(tests, function (test)
-			   cnt = cnt + 1
-			   status, err = xpcall(function () tests[test]() end,
-						debug.traceback)
-			   if status then
-			      print("  " .. test .. ": PASS")
-			      passes = passes + 1
-			   else
-			      print("  " .. test .. ": FAIL")
-			      print(err)
-			   end
-			end)
+   table.foreach(tests, runTest)
    print("test_assert.lua: passed " .. passes .. "/" .. cnt .. " tests")
    if passes ~= cnt then error("There were test failures.") end
 end
