@@ -1,8 +1,9 @@
 TestFailure = {}
 
-function TestFailure.new(failedTest, thrownError)
+function TestFailure:new(failedTest, thrownError)
    tf = {}
    setmetatable(tf, self)
+   self.__index = self
    tf.fFailedTest = failedTest
    tf.fThrownError = thrownError
    return tf
@@ -23,7 +24,7 @@ function TestFailure:errorMessage()
 end
 
 function TestFailure:toString()
-   return self:fFailedTest():toString() .. ": " .. self:errorMessage()
+   return self:failedTest():toString() .. ": " .. self:errorMessage()
 end
 
 function TestFailure:trace()
@@ -31,5 +32,5 @@ function TestFailure:trace()
 end
 
 function TestFailure:isFailure()
-   return self:thrownError():find("AssertionFailedError") == 1
+   return self:thrownError():find("AssertionFailedError") ~= nil
 end
